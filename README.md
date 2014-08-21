@@ -18,7 +18,7 @@ The module name is `couchbase-persistor`.
 
 The couchbase-persistor module takes the following configuration:
 
-   {
+    {
         "address": <address>,
 		"init": <init>,
         "host": <host>,
@@ -41,7 +41,7 @@ The couchbase-persistor module takes the following configuration:
         "address": "couchbase.persistor",
         "host": "127.0.0.1",
         "port": 8091,
-        "bucket_name": vertx,
+        "bucket_name": "vertx",
         "bucket_password": "vertx123",
         
         // the following settings should be specified just for couchbase bucket/views auto generation
