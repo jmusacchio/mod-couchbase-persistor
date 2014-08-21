@@ -81,7 +81,7 @@ public class PersistorTest extends TestVerticle {
             .putString("action", "find_by_view")
             .putString("designDoc", "dev_vertx_doc")
             .putString("viewName", "vertx_view")
-            .putObject("query", new JsonObject().putString("key", id));
+            .putObject("query", new JsonObject().putString("key", id).putString("stale", "FALSE"));
             
             eb.send("couchbase.persistor", json, new Handler<Message<JsonObject>>() {
               public void handle(Message<JsonObject> reply) {

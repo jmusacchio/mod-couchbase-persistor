@@ -41,6 +41,7 @@
     <junit.version>4.11</junit.version>
     <couchbase.client.version>1.4.4</couchbase.client.version>
     <commons-beanutils.version>1.8.3</commons-beanutils.version>
+    <commons-lang3.version>3.3.2</commons-lang3.version>
 
     <!--Plugin versions-->
     <maven.compiler.plugin.version>3.0</maven.compiler.plugin.version>
@@ -106,7 +107,13 @@
     	<artifactId>commons-beanutils-core</artifactId>
     	<version>${commons-beanutils.version}</version>
   	</dependency>
-
+  	
+	<dependency>
+    	<groupId>org.apache.commons</groupId>
+    	<artifactId>commons-lang3</artifactId>
+    	<version>${commons-lang3.version}</version>
+  	</dependency>
+  	
     <!-- Add any other dependencies that you want packaged into your module (in the lib dir) here
     as 'compile' dependencies. Here is an example
     <dependency>

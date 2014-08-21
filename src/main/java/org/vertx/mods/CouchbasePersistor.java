@@ -1,6 +1,7 @@
 package org.vertx.mods;
 
-import static org.apache.commons.beanutils.BeanUtils.setProperty;
+import static org.apache.commons.beanutils.MethodUtils.invokeMethod;
+import static org.apache.commons.lang.StringUtils.capitalize;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.couchbase.client.protocol.views.Query;
+import com.couchbase.client.protocol.views.Stale;
 import com.couchbase.client.protocol.views.View;
 import com.couchbase.client.protocol.views.ViewResponse;
 import com.couchbase.client.protocol.views.ViewRow;
@@ -172,7 +174,7 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
     }
   }
   
-  private void findByView(Message<JsonObject> message) throws IllegalAccessException, InvocationTargetException {
+  private void findByView(Message<JsonObject> message) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     String designDoc = getMandatoryString("designDoc", message);
     String viewName = getMandatoryString("viewName", message);
     JsonObject query = getMandatoryObject("query", message);
@@ -184,7 +186,15 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
     
     final Query q = new Query();
     for(Entry<String, Object> entry : query.toMap().entrySet()) {
-      setProperty(q, entry.getKey(), entry.getValue());
+      String setterMethod = "set" + capitalize(entry.getKey());
+      Object value = entry.getValue();
+      
+      if(entry.getKey().equals("stale")) {
+        invokeMethod(q, setterMethod, Stale.valueOf((String)value));
+      }
+      else {
+        invokeMethod(q, setterMethod, value);
+      }
     }
     
     final View view = client.getView(designDoc, viewName);
