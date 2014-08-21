@@ -1,0 +1,11 @@
+{
+  "main": "org.vertx.mods.CouchbasePersistor",
+  "worker": true,
+  "multi-threaded": true,
+
+  "description":"Couchbase persistor module for Vert.x",
+  "licenses": ["The Apache Software License Version 2.0"],
+  "author": "jmusacchio",
+  "keywords": ["couchbase", "couchbasedb", "database", "databases", "persistence", "json", "nosql"],
+  "homepage": "https://github.com/jmusacchio/mod-couchbase-persistor"
+}
