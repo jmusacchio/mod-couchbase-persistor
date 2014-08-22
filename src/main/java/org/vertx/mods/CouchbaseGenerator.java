@@ -109,7 +109,7 @@ public abstract class CouchbaseGenerator extends BusModBase {
    * @throws Exception
    */
   private void generate() throws Exception {    
-    container.logger().info("Connecting to " +  getURL() + " as " + username);
+    logger.info("Connecting to " +  getURL() + " as " + username);
 
     manager = new ClusterManager(bootstrapUris(), username, password);
 
@@ -168,7 +168,7 @@ public abstract class CouchbaseGenerator extends BusModBase {
       String designDoc = view.getString("designDoc");
       String function = view.getString("function");
           
-      container.logger().info("Creating View " + name);
+      logger.info("Creating View " + name);
   
       // create views
       if (name != null && designDoc != null && function != null) {
@@ -186,7 +186,7 @@ public abstract class CouchbaseGenerator extends BusModBase {
           docs.put(designDoc, dDoc);
         }
         
-        container.logger().info("Creating View " + name + "on design document " + designDoc);
+        logger.info("Creating View " + name + "on design document " + designDoc);
         
         dDoc.getViews().add(viewDesign);
       }
