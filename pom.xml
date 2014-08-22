@@ -17,9 +17,9 @@
     </license>
   </licenses>
   <scm>
-	<connection>scm:git:git://github.com/jmusacchio/mod-couchbase-persistor.git</connection>
+	<connection>scm:git:git@github.com:jmusacchio/mod-couchbase-persistor.git</connection>
 	<developerConnection>scm:git:git@github.com:jmusacchio/mod-couchbase-persistor.git</developerConnection>
-	<url>https://github.com/jmusacchio/mod-couchbase-persistor</url>
+	<url>git@github.com:jmusacchio/mod-couchbase-persistor.git</url>
   </scm>
   <developers>
     <developer>
@@ -199,6 +199,7 @@
           <target>1.7</target>
         </configuration>
       </plugin>
+      
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>${maven.resources.plugin.version}</version>
@@ -221,6 +222,7 @@
           </execution>
         </executions>
       </plugin>
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -250,6 +252,7 @@
           </execution>
         </executions>
       </plugin>
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -260,6 +263,7 @@
           </includes>
         </configuration>
       </plugin>
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -284,6 +288,7 @@
           </execution>
         </executions>
       </plugin>
+      
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
@@ -305,6 +310,7 @@
           </execution>
         </executions>
       </plugin>
+      
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
@@ -322,14 +328,62 @@
           </execution>
         </executions>
       </plugin>
+      
       <plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-release-plugin</artifactId>
-		<version>2.2.2</version>
-		<configuration>
-			<arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
-		</configuration>
-	  </plugin>
+	    <groupId>org.sonatype.plugins</groupId>
+	    <artifactId>nexus-staging-maven-plugin</artifactId>
+	    <version>1.6.2</version>
+	    <extensions>true</extensions>
+	    <configuration>
+	      <serverId>ossrh</serverId>
+	      <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+	      <autoReleaseAfterClose>true</autoReleaseAfterClose>
+	    </configuration>
+      </plugin>
+    
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+      	<artifactId>maven-source-plugin</artifactId>
+      	<version>2.2.1</version>
+      	<executions>
+          <execution>
+          	<id>attach-sources</id>
+          	<goals>
+              <goal>jar-no-fork</goal>
+          	</goals>
+          </execution>
+      	</executions>
+      </plugin>
+      
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+      	  <artifactId>maven-javadoc-plugin</artifactId>
+      	  <version>2.9.1</version>
+      	  <executions>
+        	<execution>
+          	  <id>attach-javadocs</id>
+          		<goals>
+              	<goal>jar</goal>
+          	</goals>
+        	</execution>
+      	  </executions>
+      </plugin>
+      
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+	    <artifactId>maven-gpg-plugin</artifactId>
+	    <version>1.5</version>
+	      <executions>
+	        <execution>
+	          <id>sign-artifacts</id>
+	          <phase>verify</phase>
+	          <goals>
+	            <goal>sign</goal>
+	          </goals>
+	        </execution>
+	      </executions>
+      </plugin>
+      
     </plugins>
   </build>
   
@@ -364,36 +418,4 @@
 	</repository>
   </distributionManagement>
   
-  <profiles>
-	<profile>
-		<id>release-sign-artifacts</id>
-		<activation>
-			<property>
-				<name>performRelease</name>
-				<value>true</value>
-			</property>
-		</activation>
-		<build>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-gpg-plugin</artifactId>
-					<version>1.4</version>
-					<configuration>
-						<passphrase>${gpg.passphrase}</passphrase>
-					</configuration>
-					<executions>
-						<execution>
-							<id>sign-artifacts</id>
-							<phase>verify</phase>
-							<goals>
-								<goal>sign</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
-			</plugins>
-		</build>
-	</profile>
-  </profiles>
 </project>
