@@ -165,7 +165,9 @@ To find the document send a JSON message to the module main address:
 
     {
         "action": "find_by_id", //mandatory
-        "id": <document_id> //mandatory
+        "id": <document_id>, //mandatory
+        "mode": "standard|lock|touch" //optional, default standard
+        "expiration": <expiration_time> //optional, used by lock or touch modes
     }
 
 When the find completes successfully, a reply message is sent back to the sender with the following data:
@@ -187,6 +189,35 @@ If an error occurs in finding the document a reply is returned:
 Where
 *`message` is an error message.
 
+### Find by ids
+
+Finds matching documents in the database by ids (bulk).
+
+To find the documents send a JSON message to the module main address:
+
+    {
+        "action": "find_by_ids", //mandatory
+        "ids": [<list_document_ids>], //mandatory
+    }
+
+When the find completes successfully, a reply message is sent back to the sender with the following data:
+
+    {
+        "status": "ok",
+        "id_1": <document_1>,
+        .........................................,
+        "id_n": <document_n>
+    }
+    
+If an error occurs in finding the document a reply is returned:
+
+    {
+        "status": "error",
+        "message": <message>
+    }
+    
+Where
+*`message` is an error message.
 
 ### Find by view
 

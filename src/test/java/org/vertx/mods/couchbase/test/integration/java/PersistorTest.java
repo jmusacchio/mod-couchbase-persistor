@@ -25,6 +25,9 @@ import org.vertx.testtools.TestVerticle;
 public class PersistorTest extends TestVerticle {
 
   private EventBus eb;
+  
+  private String id1 = "jmusacchio";
+  private String id2 = "juan.musacchio";
 
   @Override
   public void start() {
@@ -60,10 +63,9 @@ public class PersistorTest extends TestVerticle {
 
   @Test
   public void testPersistor() throws Exception {
-	final String id = "jmusacchio";
     JsonObject json = new JsonObject()
     .putString("action", "save")
-    .putObject("document", new JsonObject().putString("id", id).putString("name", "Juan Manuel Musacchio"));
+    .putObject("document", new JsonObject().putString("id", id1).putString("name", "Juan Manuel Musacchio"));
     
     eb.send("couchbase.persistor", json, new Handler<Message<JsonObject>>() {
       public void handle(Message<JsonObject> reply) {
@@ -71,7 +73,7 @@ public class PersistorTest extends TestVerticle {
         
         JsonObject json = new JsonObject()
         .putString("action", "find_by_id")
-        .putString("id", id);
+        .putString("id", id1);
         
         eb.send("couchbase.persistor", json, new Handler<Message<JsonObject>>() {
           public void handle(Message<JsonObject> reply) {
@@ -81,7 +83,7 @@ public class PersistorTest extends TestVerticle {
             .putString("action", "find_by_view")
             .putString("designDoc", "dev_vertx_doc")
             .putString("viewName", "vertx_view")
-            .putObject("query", new JsonObject().putString("key", id).putString("stale", "FALSE"));
+            .putObject("query", new JsonObject().putString("key", id1).putString("stale", "FALSE"));
             
             eb.send("couchbase.persistor", json, new Handler<Message<JsonObject>>() {
               public void handle(Message<JsonObject> reply) {
@@ -89,6 +91,30 @@ public class PersistorTest extends TestVerticle {
                 testComplete();
               }
             });
+          }
+        });
+      }
+    });
+  }
+  
+  @Test
+  public void testPersistor2() throws Exception {
+    JsonObject json = new JsonObject()
+    .putString("action", "save")
+    .putObject("document", new JsonObject().putString("id", id2).putString("name", "Juan Musacchio"));
+    
+    eb.send("couchbase.persistor", json, new Handler<Message<JsonObject>>() {
+      public void handle(Message<JsonObject> reply) {
+        assertEquals("ok", reply.body().getString("status"));
+        
+        JsonObject json = new JsonObject()
+        .putString("action", "find_by_ids")
+        .putArray("ids", new JsonArray().add(id1).add(id2));
+        
+        eb.send("couchbase.persistor", json, new Handler<Message<JsonObject>>() {
+          public void handle(Message<JsonObject> reply) {
+            assertEquals("ok", reply.body().getString("status"));
+            testComplete();
           }
         });
       }

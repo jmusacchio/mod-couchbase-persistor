@@ -4,6 +4,7 @@ import static org.apache.commons.beanutils.MethodUtils.invokeMethod;
 import static org.apache.commons.lang.StringUtils.capitalize;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -102,7 +103,10 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
           break;
         case "find_by_view":
           findByView(message);
-          break;        
+          break;
+        case "find_by_ids":
+          findByIds(message);
+          break;
         
         default:
           sendError(message, "Invalid action: " + action);
@@ -124,9 +128,11 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
       doc.putString("id", UUID.randomUUID().toString());
     }
 
-    PersistTo persistTo = PersistTo.valueOf(getOptionalStringConfig("persistTo", "ZERO"));
-    ReplicateTo replicateTo = ReplicateTo.valueOf(getOptionalStringConfig("replicatTo", "ZERO"));
-    int expiration = getOptionalIntConfig("expiration", 0);
+    JsonObject json = message.body();
+    
+    PersistTo persistTo = PersistTo.valueOf(json.getString("persistTo", "ZERO"));
+    ReplicateTo replicateTo = ReplicateTo.valueOf(json.getString("replicatTo", "ZERO"));
+    int expiration = json.getInteger("expiration", 0);
 
     OperationFuture<Boolean> addFuture = null;
     switch (store) {
@@ -165,7 +171,20 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
       return;
     }
     
-    CASValue<Object> object = client.gets(id);
+    String mode = message.body().getString("mode", "standard");
+    int exp = message.body().getInteger("expiration", 0);
+        
+    CASValue<Object> object = null;
+    if (mode.equals("lock")) {
+      object = client.getAndLock(id, exp);
+    }
+    else if (mode.equals("touch")) {
+      object = client.getAndTouch(id, exp);
+    }
+    else if (mode.equals("standard")) {
+      object = client.gets(id);
+    }
+     
     if (object != null) {
     	sendOK(message, new JsonObject((String)object.getValue()));
     }
@@ -207,6 +226,25 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
     }
     
     sendOK(message, new JsonObject().putArray("result", result));
+  }
+  
+  private void findByIds(Message<JsonObject> message) {
+    JsonArray ids = message.body().getArray("ids");
+
+    if (ids == null) {
+      sendError(message, "ids must be specified");
+      return;
+    }
+    
+    @SuppressWarnings("unchecked")
+    Map<String, Object> object = client.getBulk(ids.toList());
+         
+    if (object != null) {
+      sendOK(message, new JsonObject(object));
+    }
+    else {
+      sendError(message, "not found");
+    }
   }
   
   enum Store {
