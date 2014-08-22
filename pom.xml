@@ -6,7 +6,7 @@
   <groupId>io.vertx</groupId>
   <artifactId>mod-couchbase-persistor</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.1-RC1</version>
   <name>mod-couchbase-persistor</name>
   <url>http://maven.apache.org</url>
   <licenses>
@@ -407,12 +407,12 @@
   
   <distributionManagement>
 	<snapshotRepository>
-		<id>sonatype-nexus-snapshots</id>
+		<id>ossrh</id>
 		<name>Sonatype Nexus snapshot repository</name>
 		<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 	</snapshotRepository>
 	<repository>
-		<id>sonatype-nexus-staging</id>
+		<id>ossrh</id>
 		<name>Sonatype Nexus release repository</name>
 		<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 	</repository>
