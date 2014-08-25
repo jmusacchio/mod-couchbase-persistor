@@ -39,14 +39,14 @@ public abstract class CouchbaseGenerator extends BusModBase {
   protected int port;
   
   //couchbase server username
-	protected String username;
-	//couchbase server password
-	protected String password;
+  protected String username;
+  //couchbase server password
+  protected String password;
 	
-	// bucket config
-	protected String bucketName;
+  // bucket config
+  protected String bucketName;
   protected String bucketPassword;
-	protected int bucketMemorySize;
+  protected int bucketMemorySize;
   protected JsonArray views;
   
   // timeouts

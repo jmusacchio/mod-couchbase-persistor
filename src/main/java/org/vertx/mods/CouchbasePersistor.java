@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
+import net.spy.memcached.CASResponse;
 import net.spy.memcached.CASValue;
 import net.spy.memcached.PersistTo;
 import net.spy.memcached.ReplicateTo;
@@ -107,6 +108,18 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
         case "find_by_ids":
           findByIds(message);
           break;
+        case "cas":
+          cas(message);
+          break;
+        case "counter":
+          counter(message);
+          break;
+        case "unlock":
+          unlock(message);
+          break;
+        case "touch":
+          touch(message);
+          break;
         
         default:
           sendError(message, "Invalid action: " + action);
@@ -133,33 +146,60 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
     PersistTo persistTo = PersistTo.valueOf(json.getString("persistTo", "ZERO"));
     ReplicateTo replicateTo = ReplicateTo.valueOf(json.getString("replicatTo", "ZERO"));
     int expiration = json.getInteger("expiration", 0);
+    Long cas = json.getLong("cas");
 
-    OperationFuture<Boolean> addFuture = null;
+    OperationFuture<Boolean> opFuture = null;
+    OperationFuture<CASResponse> casFuture = null;
+    
     switch (store) {
       case INSERT:
-        addFuture = client.add(doc.getString("id"), expiration, doc.toString(), persistTo, replicateTo);
+        opFuture = client.add(doc.getString("id"), expiration, doc.toString(), persistTo, replicateTo);
       break;
       
       case SAVE:
-        addFuture = client.set(doc.getString("id"), expiration, doc.toString(), persistTo, replicateTo);
+        if (cas == null) {
+          opFuture = client.set(doc.getString("id"), expiration, doc.toString(), persistTo, replicateTo);
+        }
+        else {
+          casFuture = client.asyncCas(doc.getString("id"), cas, expiration, doc.toString(), persistTo, replicateTo);
+        }
       break;
       
       case UPDATE:
-        addFuture = client.replace(doc.getString("id"), expiration, doc.toString(), persistTo, replicateTo);
+        if (cas == null) {
+          opFuture = client.replace(doc.getString("id"), expiration, doc.toString(), persistTo, replicateTo);
+        }
+        else {
+          casFuture = client.asyncCas(doc.getString("id"), cas, expiration, doc.toString(), persistTo, replicateTo);
+        }
       break;
       
       case DELETE:
-        addFuture = client.delete(doc.getString("id"), persistTo, replicateTo);
+        opFuture = client.delete(doc.getString("id"), persistTo, replicateTo);
     }
     
-    boolean result = addFuture.get();
-    if(result == false) {
-      sendError(message, addFuture.getStatus().getMessage());
+    boolean result = false;
+    String msg = null;
+    String key = null;
+    
+    if (opFuture != null) {
+      result = opFuture.get();
+      msg = opFuture.getStatus().getMessage();
+      key = opFuture.getKey();
+    }
+    else if(casFuture != null) {
+      result = casFuture.get() == CASResponse.OK;
+      msg = casFuture.getStatus().getMessage();
+      key = casFuture.getKey();
+    }
+    
+    if(result) {
+      JsonObject reply = new JsonObject();
+      reply.putString("id", key);
+      sendOK(message, reply);
     }
     else {
-      JsonObject reply = new JsonObject();
-      reply.putString("id", addFuture.getKey());
-      sendOK(message, reply);
+      sendError(message, msg);
     }
   }
   
@@ -244,6 +284,124 @@ public class CouchbasePersistor extends CouchbaseGenerator implements Handler<Me
     }
     else {
       sendError(message, "not found");
+    }
+  }
+  
+  private void cas(Message<JsonObject> message) throws InterruptedException, ExecutionException {
+    JsonObject json = message.body(); 
+    
+    String key = getMandatoryString("key", message);   
+    Long cas = json.getLong("cas");
+    
+    if (key == null || cas == null) {
+      sendError(message, "key and cas must be specified");
+      return;
+    }
+    
+    PersistTo persistTo = PersistTo.valueOf(json.getString("persistTo", "ZERO"));
+    ReplicateTo replicateTo = ReplicateTo.valueOf(json.getString("replicatTo", "ZERO"));
+    int expiration = json.getInteger("expiration", 0);
+    Object value = json.getValue("value");
+    
+    OperationFuture<CASResponse> casFuture = client.asyncCas(key, cas, expiration, value, persistTo, replicateTo);
+    CASResponse response = casFuture.get();
+    
+    if (response == CASResponse.OK) {
+      JsonObject reply = new JsonObject();
+      reply.putString("key", casFuture.getKey());
+      sendOK(message, reply);
+    }
+    else {
+      sendError(message, casFuture.getStatus().getMessage());
+    }
+  }
+  
+  private void counter(Message<JsonObject> message) throws InterruptedException, ExecutionException {
+    JsonObject json = message.body(); 
+    
+    String key = getMandatoryString("key", message);
+    String operation = getMandatoryString("operation", message);
+    Long by = json.getLong("by");
+    
+    if (key == null || operation == null || by == null) {
+      sendError(message, "key and operation and by must be specified");
+      return;
+    }
+    
+    int expiration = json.getInteger("expiration", 0);
+    long def = json.getLong("default", 0);
+    OperationFuture<Long> opFuture = null;
+    
+    if (operation.equals("increment")) {
+      opFuture = client.asyncIncr(key, by, def, expiration);
+    }
+    else if (operation.equals("decrement")){
+      opFuture = client.asyncDecr(key, by, def, expiration);
+    }
+    
+    if (opFuture != null) {
+      Long counter = opFuture.get();
+      if (opFuture.getStatus().isSuccess()) {
+        JsonObject reply = new JsonObject();
+        reply.putString("key", opFuture.getKey());
+        reply.putNumber("counter", counter);
+        
+        sendOK(message, reply);
+      }
+      else {
+        sendError(message, opFuture.getStatus().getMessage());
+      }
+    }
+    else {
+      sendError(message, "invalid operation should be increment or decrement");
+    }
+  }
+  
+  private void unlock(Message<JsonObject> message) throws InterruptedException, ExecutionException {
+    JsonObject json = message.body(); 
+    
+    String key = getMandatoryString("key", message);   
+    Long cas = json.getLong("cas");
+    
+    if (key == null || cas == null) {
+      sendError(message, "key and cas must be specified");
+      return;
+    }
+        
+    OperationFuture<Boolean> unlockFuture = client.asyncUnlock(key, cas);
+    boolean response = unlockFuture.get();
+    
+    if (response) {
+      JsonObject reply = new JsonObject();
+      reply.putString("key", unlockFuture.getKey());
+      sendOK(message, reply);
+    }
+    else {
+      sendError(message, unlockFuture.getStatus().getMessage());
+    }
+  }
+  
+  private void touch(Message<JsonObject> message) throws InterruptedException, ExecutionException {
+    JsonObject json = message.body(); 
+    
+    String key = getMandatoryString("key", message);   
+    int expiration = json.getInteger("expiration", 0);
+    
+    if (key == null) {
+      sendError(message, "key must be specified");
+      return;
+    }
+        
+    OperationFuture<Boolean> touchFuture = client.touch(key, expiration);
+    boolean response = touchFuture.get();
+    
+    if (response) {
+      JsonObject reply = new JsonObject();
+      reply.putString("key", touchFuture.getKey());
+      sendOK(message, reply);
+    }
+    else {
+      sendError(message, touchFuture.getStatus().getMessage());
     }
   }
   

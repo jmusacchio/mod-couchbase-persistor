@@ -6,9 +6,9 @@
   <groupId>io.vertx</groupId>
   <artifactId>mod-couchbase-persistor</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.1-RC1</version>
-  <name>mod-couchbase-persistor</name>
-  <url>http://maven.apache.org</url>
+  <version>1.0.0-RC1</version>
+  <name>Vert.x Couchbase Persistor Module</name>
+  <url>https://github.com/jmusacchio/mod-couchbase-persistor</url>
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
