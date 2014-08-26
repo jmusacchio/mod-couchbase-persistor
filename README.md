@@ -104,7 +104,8 @@ To update a document send a JSON message to the module main address:
         "document": <json_document>, //mandatory
         "persistTo": <ZERO|ONE|TWO|THREE|FOUR>, //optional, default ZERO
         "replicatTo": <ZERO|ONE|TWO|THREE|FOUR>, //optional, default ZERO
-        "expiration": <time> //optional, default 0 - non expire
+        "expiration": <time>, //optional, default 0 - non expire
+        "cas": <cas_key> //optional for optimistic lock during concurrent update
     }
     
 ### Save
@@ -119,6 +120,7 @@ To save a document send a JSON message to the module main address:
         "persistTo": <ZERO|ONE|TWO|THREE|FOUR>, //optional, default ZERO
         "replicatTo": <ZERO|ONE|TWO|THREE|FOUR>, //optional, default ZERO
         "expiration": <time> //optional, default 0 - non expire
+        "cas": <cas_key> //optional for optimistic lock during concurrent save
     }
     
 ### Delete
@@ -268,3 +270,127 @@ If an error occurs in finding the document a reply is returned:
     
 Where
 *`message` is an error message.
+
+### Cas
+
+Checks and set a value in the database. Returns an error whether the operation didn't success.
+
+To perform a cas operation send a JSON message to the module main address:
+
+    {
+        "action": "cas", //mandatory
+        "key": <key>, //mandatory
+        "cas": <cas_key>, //mandatory,
+        "value": <object> //optional, value to be set for the key
+        "persistTo": <ZERO|ONE|TWO|THREE|FOUR>, //optional, default ZERO
+        "replicatTo": <ZERO|ONE|TWO|THREE|FOUR>, //optional, default ZERO
+        "expiration": <time> //optional, default 0 - non expire
+    }
+
+When the cas completes successfully, a reply message is sent back to the sender with the following data:
+
+    {
+        "status": "ok",
+        "key": "my_key"
+    }
+    
+If an error occurs in saving the document a reply is returned:
+
+    {
+        "status": "error",
+        "message": <message>
+    }
+    
+Where
+* `message` is an error message.
+
+### Counter
+
+Maintain a counter in the database. Returns an error whether the operation didn't success.
+
+To increment/decrement the counter send a JSON message to the module main address:
+
+    {
+        "action": "counter", //mandatory
+        "key": <key>, //mandatory, key for he counter
+        "operation": <increment|decrement>, //mandatory,
+        "by": <number> //mandatory, specifies the amount to be incremented/decremented in the counter
+        "expiration": <number> //optional, default 0 - non expire
+        "default": <number> //optional, the default value if the counter doesn't exists, default 0
+    }
+
+When the counter completes successfully, a reply message is sent back to the sender with the following data:
+
+    {
+        "status": "ok",
+        "key": "my_key",
+        "counter": <current_counter_number>
+    }
+    
+If an error occurs in saving the document a reply is returned:
+
+    {
+        "status": "error",
+        "message": <message>
+    }
+    
+Where
+* `message` is an error message.
+
+### Unlock
+
+Unlock a key in the database. Returns an error whether the operation didn't success.
+
+To unlock a key send a JSON message to the module main address:
+
+    {
+        "action": "unlock", //mandatory
+        "key": <key>, //mandatory
+        "cas": <cas_key> //mandatory,
+    }
+
+When the unlock completes successfully, a reply message is sent back to the sender with the following data:
+
+    {
+        "status": "ok",
+        "key": "my_key"
+    }
+    
+If an error occurs in saving the document a reply is returned:
+
+    {
+        "status": "error",
+        "message": <message>
+    }
+    
+Where
+* `message` is an error message.
+
+### Touch
+
+Touch a key in the database. Returns an error whether the operation didn't success.
+
+To touch a key send a JSON message to the module main address:
+
+    {
+        "action": "touch", //mandatory
+        "key": <key>, //mandatory
+        "expiration": <number> //optional default 0 - non expire
+    }
+
+When the touch completes successfully, a reply message is sent back to the sender with the following data:
+
+    {
+        "status": "ok",
+        "key": "my_key"
+    }
+    
+If an error occurs in saving the document a reply is returned:
+
+    {
+        "status": "error",
+        "message": <message>
+    }
+    
+Where
+* `message` is an error message.
